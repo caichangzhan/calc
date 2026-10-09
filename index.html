@@ -1,0 +1,1383 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f7f7f5">
+<meta name="format-detection" content="telephone=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="激光选型">
+<title>激光设备选型工具 · 稳压器 kVA + 管径换算</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  :root{
+    --bg:#ffffff; --bg2:#f7f7f5; --bg3:#f0efec;
+    --tx:#1a1a1a; --tx2:#5f5e5a; --tx3:#8a8985;
+    --bd:rgba(0,0,0,.12); --bd2:rgba(0,0,0,.24);
+    --blue:#185fa5; --blue-bg:#e6f1fb;
+    --amber:#854f0b; --amber-bg:#faeeda;
+    --red:#a32d2d; --red-bg:#fcebeb;
+    --green:#0f6e56; --green-bg:#e1f5ee;
+    --r:10px; --r2:14px;
+    --safe-b:env(safe-area-inset-bottom,0px);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    background:var(--bg2); color:var(--tx); font-size:15px; line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  input,select,button{font-family:inherit}
+
+  .wrap{max-width:760px;margin:0 auto;padding:0 14px 40px}
+  .pad{padding:16px 15px}
+
+  header{
+    position:sticky;top:0;z-index:50;background:var(--bg);
+    border-bottom:1px solid var(--bd);padding:12px 0 0;margin-bottom:16px;
+  }
+  h1{font-size:17px;font-weight:600;letter-spacing:-.2px;padding:0 2px}
+  .sub{color:var(--tx3);font-size:12px;margin-top:3px;padding:0 2px}
+
+  .tabs{display:flex;gap:6px;margin-top:11px}
+  .tab{
+    flex:1;padding:11px 8px;border:none;background:var(--bg2);color:var(--tx2);
+    font-size:14px;font-weight:500;cursor:pointer;border-radius:9px 9px 0 0;
+    border-bottom:2px solid transparent;transition:.12s;
+  }
+  .tab.on{background:var(--bg);color:var(--tx);border-bottom-color:var(--tx)}
+  .view{display:none;padding-top:16px}
+  .view.on{display:block}
+
+  .card{background:var(--bg);border:1px solid var(--bd);border-radius:var(--r2);padding:16px 15px;margin-bottom:12px}
+  h2{font-size:15px;font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+  h2 .n{
+    width:21px;height:21px;border-radius:50%;background:var(--tx);color:var(--bg);
+    font-size:11px;display:flex;align-items:center;justify-content:center;flex:0 0 auto;font-weight:500;
+  }
+  h3{font-size:13px;font-weight:600;color:var(--tx2);margin:16px 0 8px}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .row2>*{min-width:0}
+
+  label{display:block;font-size:12px;color:var(--tx2);margin-bottom:6px;font-weight:500}
+  input[type=number],input[type=text],select{
+    width:100%;padding:11px 12px;border:1px solid var(--bd2);border-radius:9px;
+    font-size:16px;background:var(--bg);color:var(--tx);min-height:46px;
+  }
+  input:focus,select:focus{outline:2px solid var(--blue);outline-offset:-1px;border-color:var(--blue)}
+  input[type=range]{width:100%;accent-color:var(--blue);height:44px}
+  .num-in{text-align:right;font-variant-numeric:tabular-nums}
+  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-variant-numeric:tabular-nums}
+  .hint{font-size:12px;color:var(--tx3);margin-top:5px;line-height:1.6}
+
+  button{
+    padding:11px 15px;border:1px solid var(--bd2);border-radius:9px;background:var(--bg);
+    font-size:14px;cursor:pointer;color:var(--tx);min-height:44px;
+  }
+  button:active{background:var(--bg3)}
+  button.mini{padding:7px 12px;font-size:13px;min-height:38px;border-radius:8px}
+  button.primary{background:var(--tx);color:var(--bg);border-color:var(--tx)}
+  .chips{display:flex;gap:7px;flex-wrap:wrap}
+  .chips button{flex:1 1 auto;min-width:62px;font-size:13px;padding:9px 10px;min-height:42px}
+  .bar{display:flex;gap:8px;flex-wrap:wrap;margin-top:11px}
+  .bar button{flex:1 1 auto;min-width:110px}
+
+  table{width:100%;border-collapse:collapse;font-size:14px;table-layout:fixed}
+  th{text-align:left;font-weight:500;color:var(--tx2);font-size:12px;padding:9px 6px;border-bottom:1px solid var(--bd)}
+  td{padding:9px 6px;border-bottom:1px solid var(--bd);word-break:break-word}
+  tr:last-child td{border-bottom:none}
+  td.n{text-align:right;font-variant-numeric:tabular-nums}
+  tr.hl-row td{background:var(--blue-bg)}
+  tr.hl-row td:first-child{box-shadow:inset 3px 0 0 var(--blue)}
+  .tbl-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;margin:0 -15px;padding:0 15px}
+  .tbl-scroll table{min-width:380px}
+  .tbl-scroll.wide table{min-width:440px}
+  .tall{max-height:340px;overflow-y:auto}
+  .swipe{font-size:11.5px;color:var(--tx3);text-align:right;margin-top:6px;display:none}
+  .swipe.on{display:block}
+
+  .metrics{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+  .m{background:var(--bg2);border-radius:var(--r);padding:13px 14px}
+  .m.hl{background:var(--blue-bg)}
+  .m.warn{background:var(--amber-bg)}
+  .m.flat{background:transparent;border:1px dashed var(--bd2)}
+  .m-l{font-size:12px;color:var(--tx2);margin-bottom:2px}
+  .m-v{font-size:25px;font-weight:600;letter-spacing:-.5px;font-variant-numeric:tabular-nums;line-height:1.25}
+  .m.hl .m-v{color:var(--blue)}
+  .m.warn .m-v{color:var(--amber)}
+  .m.flat .m-v{font-size:21px}
+  .m-u{font-size:13px;font-weight:400;color:var(--tx2);margin-left:3px}
+  .sub-val{font-size:12px;color:var(--tx2);margin-top:3px;font-variant-numeric:tabular-nums}
+
+  .note{
+    margin-top:12px;padding:12px 13px;border-radius:var(--r);background:var(--bg2);
+    font-size:13.5px;color:var(--tx2);line-height:1.7;
+  }
+  .note.amber{background:var(--amber-bg);color:var(--amber)}
+  .note.red{background:var(--red-bg);color:var(--red)}
+  .note.green{background:var(--green-bg);color:var(--green)}
+  .note b{color:var(--tx);font-weight:600}
+  .note.amber b,.note.red b,.note.green b{color:inherit}
+
+  .chart{position:relative;height:210px;margin-top:8px}
+  .chart > div{position:relative!important;width:100%!important;height:100%!important}
+
+  .formula{
+    background:var(--bg2);border-radius:var(--r);padding:12px 13px;margin-top:12px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.9;
+  }
+  .formula span{color:var(--tx2);font-family:-apple-system,sans-serif;font-size:12px}
+
+  details{border-top:1px solid var(--bd);padding:12px 0}
+  details:first-of-type{border-top:none;padding-top:0}
+  summary{cursor:pointer;font-size:14px;font-weight:500;color:var(--tx);list-style:none;display:flex;justify-content:space-between;align-items:center;gap:10px;min-height:44px}
+  summary::-webkit-details-marker{display:none}
+  summary:after{content:"＋";color:var(--tx3);font-size:16px;flex:0 0 auto}
+  details[open] summary:after{content:"−"}
+  details .inner{padding-top:10px}
+  ul{margin:6px 0 0 17px}
+  li{margin:6px 0;font-size:13.5px;color:var(--tx2)}
+  li b{color:var(--tx);font-weight:600}
+  code{background:var(--bg3);padding:1px 5px;border-radius:4px;font-size:12.5px}
+
+  .conv-in{display:flex;gap:8px;align-items:stretch}
+  .conv-in input{flex:1 1 auto;min-width:0;font-size:22px;font-weight:600;padding:12px}
+  .conv-in select{flex:0 0 88px;font-size:16px;padding:12px 6px}
+  .out{
+    background:var(--bg2);border-radius:var(--r);padding:13px 14px;margin-top:12px;
+    display:flex;justify-content:space-between;align-items:baseline;gap:12px;
+  }
+  .out .k{font-size:13px;color:var(--tx2);flex:0 0 auto}
+  .out .v{font-size:20px;font-weight:600;font-variant-numeric:tabular-nums;text-align:right;word-break:break-all}
+  .out.big{background:var(--blue-bg)}
+  .out.big .k{color:var(--blue)}
+  .out.big .v{color:var(--blue);font-size:24px}
+  .fit{background:var(--green-bg);border-radius:var(--r);padding:12px 13px;margin-top:12px;font-size:13.5px;line-height:1.7}
+  .fit b{color:var(--tx)}
+  .fit .tag{display:inline-block;background:var(--tx);color:var(--bg);font-size:12px;padding:2px 8px;border-radius:5px;margin:0 2px 3px 0;font-weight:500}
+
+  .toast{
+    position:fixed;left:50%;bottom:calc(24px + var(--safe-b));transform:translateX(-50%) translateY(20px);
+    background:var(--tx);color:var(--bg);padding:11px 18px;border-radius:999px;font-size:14px;
+    opacity:0;pointer-events:none;transition:.22s;z-index:100;max-width:86vw;text-align:center;
+  }
+  .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+  .toast.up{bottom:calc(84px + var(--safe-b))}
+
+  /* 手机端底部吸附结果条：改负载时不用滑回结果区 */
+  .mini-bar{display:none}
+  .mb-d{
+    flex:1 1 0;min-width:0;text-align:center;
+  }
+  .mb-d span{display:block;font-size:10.5px;color:var(--tx3);white-space:nowrap}
+  .mb-d b{
+    display:block;font-size:15px;font-weight:600;letter-spacing:-.3px;
+    font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .mb-d.key b{color:var(--blue)}
+
+  footer{margin-top:22px;padding-top:14px;border-top:1px solid var(--bd);font-size:12px;color:var(--tx3);line-height:1.7}
+
+  /* ===== 手机端（<700px）专项 ===== */
+  @media(max-width:699px){
+    .wrap{padding:0 14px calc(92px + var(--safe-b))}
+    .mini-bar{
+      display:flex;position:fixed;left:0;right:0;bottom:0;z-index:60;
+      background:rgba(255,255,255,.94);backdrop-filter:saturate(180%) blur(12px);
+      -webkit-backdrop-filter:saturate(180%) blur(12px);
+      border-top:1px solid var(--bd2);padding:7px 8px calc(7px + var(--safe-b));
+      gap:2px;
+    }
+    .mini-bar.off{display:none}
+    .mb-d b{font-size:14px}
+    .metrics{gap:8px}
+    .m{padding:11px 12px}
+    .m-v{font-size:23px}
+    .m.flat .m-v{font-size:19px}
+    .card{padding:15px 13px}
+    h2{font-size:14.5px}
+  }
+
+  /* 负载清单：≤480px 改成一行式卡片，彻底不横向滚动 */
+  @media(max-width:480px){
+    #loadTbl,#loadTbl tbody,#loadTbl tr,#loadTbl td{display:block;width:auto}
+    #loadTbl{min-width:0}
+    #loadTbl thead{display:none}
+    #loadTbl tr{
+      display:grid;grid-template-columns:1fr 76px 42px;gap:7px;align-items:center;
+      padding:7px 0;border-bottom:1px solid var(--bd);
+    }
+    #loadTbl tr:last-child{border-bottom:none}
+    #loadTbl td{padding:0;border:none}
+    #loadTbl td:first-child{display:none}
+    #loadTbl input[type=text],#loadTbl input.num-in{
+      width:100%;font-size:16px;min-height:44px;padding:10px;
+    }
+    #loadTbl .num-in{text-align:right}
+    #loadTbl button{width:42px;min-height:44px;padding:0}
+  }
+  @media(max-width:359px){
+    .wrap{padding-left:10px;padding-right:10px}
+    .card{padding:13px 11px}
+    #loadTbl tr{grid-template-columns:1fr 68px 38px;gap:5px}
+    .mb-d b{font-size:13px}
+    .m-v{font-size:21px}
+  }
+
+  @media(min-width:700px){
+    .wrap{padding:0 24px 60px}
+    .card{padding:20px 22px;margin-bottom:16px}
+    h1{font-size:21px}
+    .sub{font-size:13px}
+    .tabs{gap:8px}
+    .tab{font-size:15px;padding:13px}
+    .metrics{grid-template-columns:repeat(auto-fit,minmax(140px,1fr))}
+    .m-v{font-size:27px}
+    .chart{height:240px}
+    .conv-in select{flex:0 0 130px;font-size:16px}
+    .conv-in input{font-size:26px}
+    .out .v{font-size:22px}
+    .out.big .v{font-size:28px}
+    .tbl-scroll{margin:0;padding:0}
+    .tbl-scroll table,.tbl-scroll.wide table{min-width:0}
+    .chips button{min-width:0}
+    .num-in{width:88px;padding:7px 9px;font-size:14px;min-height:38px}
+    .pad{padding:20px 22px}
+    .bar button{min-width:0}
+  }
+  @media(min-width:1000px){
+    .wrap{max-width:960px}
+  }
+
+  @media print{
+    body{background:#fff;font-size:12px}
+    header{position:static}
+    .no-print,.tabs,.toast{display:none!important}
+    .wrap{max-width:100%;padding:0}
+    .card{break-inside:avoid;border-color:#ccc;margin-bottom:10px}
+    .view{display:block!important}
+    details{border-top:1px solid #ddd}
+    .tbl-scroll{max-height:none;overflow:visible}
+    .tbl-scroll table,.tbl-scroll.wide table{min-width:0}
+    .tall{max-height:none;overflow:visible}
+    .m,.out,.fit{background:#f7f7f5!important}
+    *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+    <div style="min-width:0">
+      <h1>激光设备选型工具</h1>
+      <p class="sub">稳压器 kVA · 配线选型 · 管径单位换算</p>
+    </div>
+  </div>
+  <div class="tabs no-print">
+    <button class="tab on" onclick="go('calc')">稳压器选型</button>
+    <button class="tab" onclick="go('conv')">单位换算</button>
+  </div>
+</header>
+
+<div class="wrap">
+
+<!-- ══════════ 视图一：稳压器 ══════════ -->
+<div class="view on" id="v-calc">
+
+  <div class="card">
+    <h2><span class="n">1</span>负载功率清单<span style="margin-left:auto;font-size:11.5px;color:var(--tx3);font-weight:400">单台设备</span></h2>
+    <p style="font-size:13.5px;color:var(--tx2);margin-bottom:12px">取所有分项<b style="color:var(--tx)">总和</b>，不要只取激光源那一行。</p>
+    <div class="tbl-scroll">
+      <table id="loadTbl">
+        <thead><tr><th style="width:26px"></th><th>负载项</th><th style="width:88px;text-align:right">kW</th><th style="width:40px"></th></tr></thead>
+        <tbody id="loads"></tbody>
+      </table>
+    </div>
+    <div style="display:flex;gap:9px;align-items:center;margin-top:12px;flex-wrap:wrap">
+      <button class="mini no-print" onclick="addLoad()">+ 负载项</button>
+      <div style="flex:1 1 auto;text-align:right">
+        <span style="font-size:12px;color:var(--tx2)">单台装机总功率</span>
+        <span class="mono" id="totalKw" style="font-size:23px;font-weight:600;margin-left:7px">44</span>
+        <span style="font-size:13px;color:var(--tx2)">kW</span>
+      </div>
+    </div>
+    <h3>快速填入</h3>
+    <div class="chips no-print">
+      <button onclick="loadPreset('tube3k')">3kW 切管</button>
+      <button onclick="loadPreset('tube6k')">6kW 切管</button>
+      <button onclick="loadPreset('plate3k')">3kW 板材</button>
+      <button onclick="loadPreset('plate6k')">6kW 板材</button>
+      <button onclick="loadPreset('plate12k')">12kW 板材</button>
+      <button onclick="loadPreset('plate20k')">20kW 板材</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2><span class="n">2</span>场地配置</h2>
+    <p style="font-size:13.5px;color:var(--tx2);margin-bottom:12px">展厅/工厂里不止一台机时，按<b style="color:var(--tx)">同时运行的功率</b>算总进线，不是简单乘台数。</p>
+    <div class="row2">
+      <div>
+        <label>设备台数</label>
+        <input type="number" id="qty" value="1" min="1" max="20" step="1" oninput="calc()">
+      </div>
+      <div>
+        <label>需用系数</label>
+        <select id="demand" onchange="calc()">
+          <option value="1" selected>1.00 全部同时运行</option>
+          <option value="0.9">0.90 主辅错峰</option>
+          <option value="0.8">0.80 辅助设备独立回路</option>
+          <option value="0.7">0.70 多台互备</option>
+        </select>
+      </div>
+    </div>
+    <div class="note green" id="siteNote"></div>
+  </div>
+
+  <div class="card">
+    <h2><span class="n">3</span>厂家整机规格表</h2>
+    <p style="font-size:13.5px;color:var(--tx2);margin-bottom:11px">
+      厂家已给出额定电流，<b style="color:var(--tx)">直接用这一栏最准</b>，不要自己按 cosφ 重算 —— 厂家按保守口径出的数，电工配线也按这个数。
+    </p>
+    <div class="tbl-scroll wide">
+      <table>
+        <thead><tr><th>激光器</th><th style="text-align:right">整机 kW</th><th style="text-align:right">额定电流</th><th style="text-align:right">kVA</th><th style="text-align:right">建议稳压</th><th style="width:44px"></th></tr></thead>
+        <tbody id="vendorTbl"></tbody>
+      </table>
+    </div>
+    <div class="note" style="margin-top:11px">
+      <b>口径</b>：厂家统一按 <b>480V 三相 · cosφ = 0.6</b> 出电流（表中四行反推 cosφ 均为 0.6014，完全一致）。
+      这是保守值，比实测 0.7~0.8 大 15~30%，<b>宁可偏大不可偏小</b>。
+    </div>
+  </div>
+
+  <div class="card">
+    <h2><span class="n">4</span>电气参数</h2>
+    <label>功率因数 cosφ <span id="pfV" style="color:var(--tx);font-weight:600">0.75</span>
+      <span id="pfLock" style="color:var(--blue);font-size:11.5px"></span></label>
+    <input type="range" id="pf" min="0.60" max="0.95" step="0.01" value="0.75" oninput="onPfDrag()">
+    <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--tx3);margin:-2px 0 8px">
+      <span>0.60 较差</span><span>0.95 理想</span>
+    </div>
+    <button class="mini no-print" onclick="unlockPf(true)" style="margin-bottom:14px">改为自定义 cosφ</button>
+    <label style="margin-top:10px">进线电压（线电压）</label>
+    <select id="vol" onchange="calc()">
+      <option value="480" selected>480V 三相 277V — 北美工业</option>
+      <option value="240">240V 三相 Delta</option>
+      <option value="208">208V 三相 120V — 商业</option>
+      <option value="600">600V 三相 347V — 加拿大</option>
+    </select>
+    <label style="margin-top:12px">余量系数</label>
+    <select id="margin" onchange="calc()">
+      <option value="1.15">1.15 保守</option>
+      <option value="1.25" selected>1.25 推荐</option>
+      <option value="1.35">1.35 恶劣工况</option>
+    </select>
+    <label style="margin-top:12px">实测线电压（选填）</label>
+    <input type="number" id="vmeas" placeholder="如 472" step="1" oninput="calc()">
+    <p style="font-size:12px;color:var(--tx3);margin-top:5px">ANSI C84.1 允许 ±5%，超出会在下方提示</p>
+
+    <h3>现场实测反算 cosφ</h3>
+    <div class="row2">
+      <div>
+        <label>实测有功 kW</label>
+        <input type="number" id="mKw" placeholder="如 88" step="1" oninput="fieldMeas()">
+      </div>
+      <div>
+        <label>实测电流 A</label>
+        <input type="number" id="mAmp" placeholder="如 142" step="1" oninput="fieldMeas()">
+      </div>
+    </div>
+    <div class="note" id="mNote">填入有功功率钳表 + 钳形表读数，自动算 cosφ 并回填滑杆。</div>
+
+    <div class="formula">
+      kVA = kW ÷ cosφ<br>
+      I = kVA × 1000 ÷ (V × √3)<br>
+      场地 kVA = 单台 kVA × 台数 × 需用系数<br>
+      <span>档位 = 不小于 (kVA × 余量) 的最小标准容量，余量不足 7% 自动跳档</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2><span class="n">5</span>选型结果</h2>
+    <div class="metrics">
+      <div class="m flat"><div class="m-l">单台容量</div><div class="m-v" id="rKva">—</div><div class="sub-val" id="rKvaSub">—</div></div>
+      <div class="m flat"><div class="m-l">单台满载电流</div><div class="m-v" id="rAmp">—</div><div class="sub-val" id="rAmpSub">—</div></div>
+      <div class="m flat"><div class="m-l">场地最大容量</div><div class="m-v" id="rKvaS">—</div><div class="sub-val" id="rKvaSSub">—</div></div>
+      <div class="m flat"><div class="m-l">场地最大电流</div><div class="m-v" id="rAmpS">—</div><div class="sub-val" id="rAmpSSub">—</div></div>
+      <div class="m hl"><div class="m-l">建议稳压器</div><div class="m-v" id="rTier">—</div><div class="sub-val" id="rTierSub">—</div></div>
+      <div class="m"><div class="m-l">总开关</div><div class="m-v" id="rBrk">—</div><div class="sub-val" id="rBrkSub">—</div></div>
+    </div>
+    <div class="note" id="rNote"></div>
+    <div class="bar no-print">
+      <button class="mini" onclick="copySpec()" id="copyBtn">复制供电申请摘要</button>
+      <button class="mini" onclick="window.print()">打印 / 存 PDF</button>
+      <button class="mini" onclick="resetAll()">清空重来</button>
+    </div>
+    <p class="hint" id="saveHint"></p>
+  </div>
+
+  <div class="card">
+    <h2><span class="n">6</span>进线电缆与开关</h2>
+    <p style="font-size:13.5px;color:var(--tx2);margin-bottom:11px">
+      铜导体 75℃ 表（NEC 310.16，三根载流导体）。按<b style="color:var(--tx)">总开关额定</b>取上一级，导线载流不低于开关整定值。
+    </p>
+    <div class="metrics" style="margin-top:0">
+      <div class="m hl"><div class="m-l">进线电缆</div><div class="m-v mono" id="rWire" style="font-size:22px">—</div><div class="sub-val" id="rWireSub">—</div></div>
+      <div class="m"><div class="m-l">开关框架</div><div class="m-v" id="rFrame">—</div><div class="sub-val" id="rFrameSub">—</div></div>
+      <div class="m"><div class="m-l">并机时单台支路</div><div class="m-v" id="rBranch">—</div><div class="sub-val" id="rBranchSub">—</div></div>
+    </div>
+    <div class="tbl-scroll wide tall" style="margin-top:12px">
+      <table>
+        <thead><tr><th>导体</th><th style="text-align:right">载流 A</th><th style="text-align:right">适配开关</th><th>说明</th></tr></thead>
+        <tbody id="wireTbl"></tbody>
+      </table>
+    </div>
+    <div class="note amber">
+      <b>三点提醒</b>：① 谐波负载（激光整流）多台并联时，中性线与线径要按<b>谐波电流</b>复核，不能只按 kVA；
+      ② 敷设环境温度高于 30℃ 或多根并敷需按 310.15(B) <b>降容</b>；③ 最终以现场电气工程师核算为准。
+    </div>
+  </div>
+
+  <div class="card">
+    <h2><span class="n">7</span>cosφ 对选型的影响</h2>
+    <div class="chart"><canvas id="pfChart" role="img" aria-label="不同功率因数下建议稳压器容量对比柱状图"></canvas></div>
+  </div>
+
+  <div class="card">
+    <h2><span class="n">8</span>档位对照</h2>
+    <div class="tbl-scroll">
+      <table>
+        <thead><tr><th>参数</th><th style="text-align:right">当前</th><th style="text-align:right">保守</th><th style="text-align:right">推荐</th></tr></thead>
+        <tbody>
+          <tr><td>cosφ</td><td class="n" id="tPf">0.75</td><td class="n">0.70</td><td class="n">0.80</td></tr>
+          <tr><td>kVA</td><td class="n" id="tKva">—</td><td class="n" id="tKvaC">—</td><td class="n" id="tKvaR">—</td></tr>
+          <tr><td>放大后需求</td><td class="n" id="tReq">—</td><td class="n" id="tReqC">—</td><td class="n" id="tReqR">—</td></tr>
+          <tr><td><b>稳压器</b></td><td class="n" id="tTier">—</td><td class="n" id="tTierC">—</td><td class="n" id="tTierR">—</td></tr>
+          <tr><td>余量</td><td class="n" id="tHead">—</td><td class="n" id="tHeadC">—</td><td class="n" id="tHeadR">—</td></tr>
+          <tr><td colspan="4" style="color:var(--tx3);font-size:12px" id="tScene">—</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2><span class="n">9</span>选型依据</h2>
+    <details open>
+      <summary>为什么不能直接用 kW 选</summary>
+      <div class="inner"><ul>
+        <li><b>kVA ≠ kW</b>，差一个功率因数。kW 是有效功率，kVA 是视在功率，变压器发热由视在功率决定。</li>
+        <li>激光源是整流负载、谐波大；冷水机与空压机压缩机都是感性电机。三者叠加整机 cosφ 常见 <b>0.7~0.8</b>。</li>
+        <li>取 1 会把变压器选小一整档。</li>
+      </ul></div>
+    </details>
+    <details>
+      <summary>余量系数怎么来的</summary>
+      <div class="inner"><ul>
+        <li>1.25 不是"留富余"，是吸收<b>启动冲击</b>。电机启动电流是额定 5~7 倍，激光源上电冲击更高。</li>
+        <li>空压机那条支路建议<b>单独上小变压器</b>，别跟主机挤一个池子。</li>
+        <li>余量 &lt;7% 自动跳档 —— 满载压变压器会过热保护。</li>
+      </ul></div>
+    </details>
+    <details>
+      <summary>多台设备怎么算总进线</summary>
+      <div class="inner"><ul>
+        <li>单台 × 台数 = 名义装机；再乘<b>需用系数</b>才是真实峰值需求。</li>
+        <li>除尘、空压、气动上料<b>不会和切割同时满载</b>，取 0.8~0.9 是常规做法；多机互备生产可取 0.7。</li>
+        <li>总开关按峰值电流选，<b>不要按单台电流选</b>再靠并联 —— 电气工程师按总容量审图。</li>
+        <li>若总容量超过变压器单机上限（常见 400/500/630 kVA），应<b>拆成 2 台变压器分组供电</b>，同时向物业申请扩容。</li>
+      </ul></div>
+    </details>
+    <details>
+      <summary>DFW 展厅选址相关</summary>
+      <div class="inner"><ul>
+        <li>40kW 级设备<b>必须有 480V 三相进线</b>，不少 3,000 SF 工业 flex 只给 208Y/120V。</li>
+        <li>把"三相进线 ≥ <span id="minA" class="mono">—</span> A"写进 LOI 附件。</li>
+        <li>同时问房东<b>可扩容余量</b> —— 增容周期可能数月，会卡住入住。</li>
+      </ul></div>
+    </details>
+    <details>
+      <summary>现场实测</summary>
+      <div class="inner"><ul>
+        <li>公式人人会算，<b>真正决定结果的是 cosφ 取 0.7 还是 0.8</b>，差一台变压器的钱。</li>
+        <li>钳形表测进线电压电流：<code>cosφ = kW ÷ (V×I×√3 ÷ 1000)</code>。有功率计直接读。</li>
+      </ul></div>
+    </details>
+  </div>
+</div>
+
+<!-- ══════════ 视图二：单位换算 ══════════ -->
+<div class="view" id="v-conv">
+
+  <div class="card">
+    <h2><span class="n">1</span>即时换算</h2>
+    <div class="conv-in">
+      <input type="text" id="cvVal" value="6" inputmode="text" placeholder='如 2-1/2" / 60mm / 20ga' oninput="conv()" autocomplete="off" spellcheck="false">
+      <select id="cvUnit" onchange="conv()">
+        <option value="in">inch</option>
+        <option value="mm">mm</option>
+        <option value="ga">ga</option>
+      </select>
+    </div>
+    <p class="hint">支持直接粘贴客户口径：<code>2-1/2"</code> <code>Ø114.3</code> <code>1.5in</code> <code>20ga</code> <code>80 mm</code></p>
+    <div class="out big">
+      <span class="k">毫米 mm</span>
+      <span class="v" id="oMm">—</span>
+    </div>
+    <div class="out">
+      <span class="k">英寸（小数）</span>
+      <span class="v" id="oIn">—</span>
+    </div>
+    <div class="out">
+      <span class="k">英寸（分数）</span>
+      <span class="v" id="oFrac">—</span>
+    </div>
+    <div class="out">
+      <span class="k">最接近常用分数</span>
+      <span class="v" id="oNear">—</span>
+    </div>
+    <div class="out">
+      <span class="k">外周长（mm）</span>
+      <span class="v" id="oCirc">—</span>
+    </div>
+    <div class="fit" id="oFit"></div>
+    <div class="bar no-print">
+      <button class="mini" onclick="copyConv()">复制换算结果</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2><span class="n">2</span>公称管径 NPS → 实际外径</h2>
+    <p style="font-size:13.5px;color:var(--tx2);margin-bottom:11px">
+      客户说"2 吋管"时，<b style="color:var(--tx)">公称 ≠ 外径</b>。这一栏是卡盘能不能夹住的关键，先查再报价。
+    </p>
+    <div class="tbl-scroll wide tall">
+      <table>
+        <thead><tr><th>NPS</th><th style="text-align:right">钢 OD</th><th style="text-align:right">不锈钢常用</th><th style="text-align:right">铝常用</th></tr></thead>
+        <tbody id="npsTbl"></tbody>
+      </table>
+    </div>
+    <div class="note">
+      钢/合金钢管按 <b>ASME B36.10</b>，不锈钢按 304/316 圆管外径系列，铝按 6061-T6 圆管外径系列 —— 同名尺寸<b>差几毫米</b>，直接决定卡盘与刀具路径，先向客户确认材质。
+    </div>
+  </div>
+
+  <div class="card">
+    <h2><span class="n">3</span>常用分数英寸速查</h2>
+    <p style="font-size:13px;color:var(--tx2);margin-bottom:11px">点一下直接换算。美国客户报管径多用这些。</p>
+    <div class="tbl-scroll wide tall">
+      <table>
+        <thead><tr><th>英寸</th><th style="text-align:right">mm</th><th style="text-align:right">周长</th><th>常用场景</th></tr></thead>
+        <tbody id="fracTbl"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2><span class="n">4</span>规格 ↔ 毫米对照</h2>
+    <p style="font-size:13px;color:var(--tx2);margin-bottom:11px">钢板/铝板常用号数。激光切割报价按 mm 走，客户报号数时要换算。</p>
+    <div class="tbl-scroll">
+      <table>
+        <thead><tr><th>号数</th><th style="text-align:right">mm</th><th style="text-align:right">英寸</th><th>备注</th></tr></thead>
+        <tbody id="gaTbl"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2><span class="n">5</span>重量估算</h2>
+    <p style="font-size:13.5px;color:var(--tx2);margin-bottom:11px">给客户报<b style="color:var(--tx)">吨位/运费/工时</b>时快速取数。</p>
+    <label>材质密度</label>
+    <select id="mat" onchange="weight()">
+      <option value="7.85" selected>碳钢 / 镀锌 7.85</option>
+      <option value="7.93">不锈钢 304/316 7.93</option>
+      <option value="2.70">铝 6061 2.70</option>
+      <option value="7.20">铝 5052 7.20</option>
+      <option value="8.90">铜 / 黄铜 8.90</option>
+    </select>
+    <h3>板材</h3>
+    <div class="row2">
+      <div><label>厚 mm</label><input type="number" id="pT" value="3" step="0.1" oninput="weight()"></div>
+      <div><label>数量</label><input type="number" id="pQ" value="1" step="1" oninput="weight()"></div>
+    </div>
+    <div class="row2" style="margin-top:10px">
+      <div><label>长 mm</label><input type="number" id="pL" value="2000" step="1" oninput="weight()"></div>
+      <div><label>宽 mm</label><input type="number" id="pW" value="1000" step="1" oninput="weight()"></div>
+    </div>
+    <div class="metrics" style="margin-top:12px">
+      <div class="m flat"><div class="m-l">单件重量</div><div class="m-v" id="pKg">—</div></div>
+      <div class="m hl"><div class="m-l">合计重量</div><div class="m-v" id="pSum">—</div></div>
+    </div>
+    <h3>圆管</h3>
+    <div class="row2">
+      <div><label>外径 mm</label><input type="number" id="tO" value="60.3" step="0.1" oninput="weight()"></div>
+      <div><label>壁厚 mm</label><input type="number" id="tT" value="3" step="0.1" oninput="weight()"></div>
+    </div>
+    <div class="row2" style="margin-top:10px">
+      <div><label>长度 mm</label><input type="number" id="tL" value="6000" step="1" oninput="weight()"></div>
+      <div><label>数量</label><input type="number" id="tQ" value="1" step="1" oninput="weight()"></div>
+    </div>
+    <div class="metrics" style="margin-top:12px">
+      <div class="m flat"><div class="m-l">单根重量</div><div class="m-v" id="tKg">—</div></div>
+      <div class="m hl"><div class="m-l">合计重量</div><div class="m-v" id="tSum">—</div></div>
+    </div>
+    <p class="hint">理论重量，未计焊缝/切口损耗；实际发货按磅换算（1 lb = 0.4536 kg）。</p>
+    <div class="bar no-print">
+      <button class="mini" onclick="copyWeight()">复制重量结果</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2><span class="n">6</span>换算说明</h2>
+    <details open>
+      <summary>ga 是什么，为什么不能线性换算</summary>
+      <div class="inner"><ul>
+        <li><b>ga</b> 是英美制薄板厚度单位（gauge）。<b>号数越大，板越薄</b> —— 和 mm 相反。</li>
+        <li>刻度<b>不是线性的</b>：10ga=3.76mm，20ga=1.55mm，差 10 号只差 2.2mm，但后段越挤。</li>
+        <li>同样号数<b>不同材质厚度不同</b>：铝材比钢薄。查表须对材质，本表为普通碳钢。</li>
+        <li>20ga=1.55mm 这类薄板对激光设备有<b>最低厚度门槛</b>，报价前确认能否切穿。</li>
+      </ul></div>
+    </details>
+    <details>
+      <summary>关于公称尺寸</summary>
+      <div class="inner"><ul>
+        <li>管材常用<b>公称英寸</b>（NPS），实际外径不等于名义值 —— 例如 2" NPS 实际外径 60.3mm。</li>
+        <li>客户说"2 吋管"时，先确认是<b>公称尺寸还是实际外径</b>，差几毫米直接决定能否套进卡盘。</li>
+        <li>不锈钢管另按外径系列（如 201/304 圆管 19/25/32/38/42/48mm），不按 NPS。</li>
+      </ul></div>
+    </details>
+    <details>
+      <summary>产品线适配说明</summary>
+      <div class="inner"><ul>
+        <li><b>K 系列</b> Φ1.5–280：直切圆管/方管，家具五金、小口径。</li>
+        <li><b>T 系列</b> Φ15–500：3D 旋转头 ±45°，可切 K/V 坡口，焊接结构件。</li>
+        <li><b>F 系列</b> Φ10–160 / <b>H 系列</b> Ø50–1000：异形与重型大管。</li>
+        <li>换算出 mm 后对照上表即可判断该走哪条线，再回头看具体机型幅面是否覆盖。</li>
+      </ul></div>
+    </details>
+  </div>
+</div>
+
+<footer>
+  选型结果仅供参考，最终以电气工程师核算与当地电力公司进线条件为准。电压标准参照 ANSI C84.1，导线与开关须符合 NEC / NFPA 70。<br>
+  钢板号数为普通碳钢数值，铝材与不锈钢需另查对照表。重量为理论值，实际以过磅为准。
+</footer>
+
+</div>
+
+<div class="toast up" id="toast"></div>
+
+<!-- 手机端底部吸附结果条：改负载时不用滑回结果区 -->
+<div class="mini-bar no-print" id="miniBar">
+  <div class="mb-d key"><span>稳压器</span><b id="mbTier">—</b></div>
+  <div class="mb-d"><span>总开关</span><b id="mbBrk">—</b></div>
+  <div class="mb-d"><span>进线电缆</span><b id="mbWire">—</b></div>
+  <div class="mb-d"><span>进线电流</span><b id="mbAmp">—</b></div>
+</div>
+
+<script>
+/* ══════════ 通用 ══════════ */
+function go(k){
+  ['calc','conv'].forEach(v=>{
+    document.getElementById('v-'+v).classList.toggle('on',v===k);
+  });
+  document.querySelectorAll('.tab').forEach((t,i)=>{
+    t.classList.toggle('on',['calc','conv'][i]===k);
+  });
+  document.getElementById('miniBar').classList.toggle('off',k!=='calc');
+  document.getElementById('toast').classList.toggle('up',k==='calc');
+  if(k==='calc') setTimeout(drawChart,30);
+  setTimeout(markScroll,60);
+}
+/* 表格实际溢出时才提示可横向滑动 */
+function markScroll(){
+  document.querySelectorAll('.tbl-scroll').forEach(el=>{
+    const p=el.parentNode;
+    let hint=null;
+    for(const c of p.children){ if(c.classList&&c.classList.contains('swipe')){hint=c;break} }
+    if(el.scrollWidth>el.clientWidth+2){
+      if(!hint){
+        hint=document.createElement('p');
+        hint.className='swipe on';
+        hint.textContent='← 表格可横向滑动';
+        p.insertBefore(hint,el.nextSibling);
+      }
+    }else if(hint){
+      hint.remove();
+    }
+  });
+}
+window.addEventListener('resize',()=>setTimeout(markScroll,120));
+let toastTimer;
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('on');
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('on'),2000);
+}
+function copy(text){
+  const done=()=>toast('已复制到剪贴板');
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(done).catch(()=>fallbackCopy(text,done));
+  }else fallbackCopy(text,done);
+}
+function fallbackCopy(text,done){
+  const ta=document.createElement('textarea');
+  ta.value=text; ta.style.position='fixed'; ta.style.opacity='0';
+  document.body.appendChild(ta); ta.select();
+  try{document.execCommand('copy');done()}catch(e){toast('复制失败，请手动选取')}
+  document.body.removeChild(ta);
+}
+window.addEventListener('beforeprint',()=>{
+  document.querySelectorAll('details').forEach(d=>d.open=true);
+});
+
+/* ══════════ 稳压器 ══════════ */
+const TIERS=[3,5,6,10,15,20,25,30,37,50,60,75,80,100,125,160,200,250,315,400,500,630];
+// 铜导体 75℃ 表（NEC 310.16，三根载流导体）
+const WIRE=[
+  ['14 AWG',20,'≤20 A'],['12 AWG',25,'≤25 A'],['10 AWG',30,'≤30 A'],['8 AWG',40,'≤40 A'],
+  ['6 AWG',55,'≤60 A'],['4 AWG',70,'≤70 A'],['3 AWG',85,'≤90 A'],['2 AWG',95,'≤100 A'],
+  ['1 AWG',110,'≤125 A'],['1/0 AWG',125,'≤150 A'],['2/0 AWG',145,'≤175 A'],['3/0 AWG',165,'≤200 A'],
+  ['4/0 AWG',195,'≤225 A'],['250 kcmil',215,'≤250 A'],['300 kcmil',235,'≤300 A'],
+  ['350 kcmil',250,'≤350 A'],['400 kcmil',270,'≤400 A'],['500 kcmil',310,'≤500 A'],
+  ['600 kcmil',350,'≤600 A'],['750 kcmil',385,'≤700 A'],['1000 kcmil',460,'≤900 A']
+];
+// NEC 标准断路器整定值（A）
+const BRK=[15,20,25,30,35,40,45,50,60,70,80,90,100,110,125,150,175,200,225,250,300,350,400,500,600,800,1000];
+// 常见开关框架
+const FRAME=[20,25,60,100,125,250,400,600,800,1200];
+
+const PRESETS={
+  tube3k:[['主机',9],['激光源',6],['冷水机',2]],
+  tube6k:[['主机',14],['激光源',11],['冷水机',4]],
+  plate3k:[['主机（含气动上料）',14],['激光源',11],['冷水机',4]],
+  plate6k:[['主机（含气动上料）',20],['激光源',18],['冷水机',6]],
+  plate12k:[['主机（含气动上料）',32],['激光源',40],['冷水机',10]],
+  plate20k:[['主机（含气动上料）',48],['激光源',66],['冷水机',16]]
+};
+// 厂家官方整机功率/电流表（480V 三相，cosφ=0.6 口径）
+// 逆推验证：89/148=0.6014 · 58/96.4=0.6014 · 30/49.9=0.6014 · 18/29.9=0.6014 —— 四行完全一致
+const VENDOR=[
+  {p:20, kw:89, a:178, kva:148},
+  {p:12, kw:58, a:116, kva:96},
+  {p:6,  kw:30, a:60,  kva:50},
+  {p:3,  kw:18, a:36,  kva:30}
+];
+let loads=[{n:'主机（含气动上料）',k:14},{n:'激光源',k:11},{n:'冷水机',k:4},{n:'空压机',k:15}];
+
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function totalKw(){return loads.reduce((s,l)=>s+(parseFloat(l.k)||0),0)}
+function getQty(){return Math.max(1,Math.round(parseFloat(document.getElementById('qty').value)||1))}
+function getDemand(){return Math.min(1,Math.max(0.1,parseFloat(document.getElementById('demand').value)||1))}
+
+function renderLoads(){
+  document.getElementById('loads').innerHTML=loads.map((l,i)=>
+   `<tr><td style="color:var(--tx3);font-size:12px;text-align:center">${i+1}</td>`+
+   `<td><input type="text" value="${esc(l.n)}" oninput="loads[${i}].n=this.value"></td>`+
+   `<td><input type="number" class="num-in" value="${l.k}" min="0" step="0.5" placeholder="kW" inputmode="decimal" oninput="loads[${i}].k=parseFloat(this.value)||0;calc()"></td>`+
+   `<td><button class="mini no-print" onclick="delLoad(${i})" style="min-height:38px;padding:6px 10px" title="删除">&times;</button></td></tr>`).join('');
+  document.getElementById('totalKw').textContent=totalKw();
+}
+function delLoad(i){loads.splice(i,1);renderLoads();calc()}
+function addLoad(){loads.push({n:'新负载项',k:0});renderLoads()}
+function loadPreset(k){loads=PRESETS[k].map(([n,v])=>({n,k:v}));document.getElementById('qty').value=1;renderLoads();calc()}
+
+// 厂家规格表：渲染 + 点击回填
+function renderVendor(){
+  document.getElementById('vendorTbl').innerHTML=VENDOR.map((v,i)=>{
+    const tier=pickTier(v.kva*1.25);
+    return `<tr style="cursor:pointer" onclick="useVendor(${i})">
+      <td style="font-weight:500">${v.p}kW</td>
+      <td class="n mono">${v.kw}</td>
+      <td class="n mono">${v.a} A</td>
+      <td class="n mono">${v.kva}</td>
+      <td class="n mono" style="font-weight:500">${tier}</td>
+      <td><button class="mini no-print" style="min-height:34px;padding:5px 9px;font-size:12px">填入</button></td>
+    </tr>`;
+  }).join('');
+  renderWire();
+}
+// 填入：整机 kW + 额定电流都带过去，并把 cosφ 锁定到厂家口径
+function useVendor(i){
+  const v=VENDOR[i];
+  loads=[{n:'整机（厂家额定）',k:v.kw}];
+  document.getElementById('qty').value=1;
+  document.getElementById('demand').value='1';
+  renderLoads();
+  const pfCalc=v.kw/v.kva;
+  const pfEl=document.getElementById('pf');
+  pfEl.min=Math.max(0.50,pfCalc-0.01).toFixed(2);
+  pfEl.max=Math.min(1.00,pfCalc+0.01).toFixed(2);
+  pfEl.step='0.0001';
+  pfEl.value=pfCalc.toFixed(4);
+  document.getElementById('vol').value='480';
+  calc();
+  toast(`已按 ${v.p}kW 厂家口径填入，cosφ 锁定 ${pfCalc.toFixed(3)}`);
+  document.getElementById('v-calc').scrollIntoView({behavior:'smooth',block:'start'});
+}
+function unlockPf(explicit){
+  const pfEl=document.getElementById('pf');
+  const locked=pfEl.step==='0.0001';
+  if(!locked&&!explicit) return;
+  pfEl.min='0.60'; pfEl.max='0.95'; pfEl.step='0.01';
+  if(locked) pfEl.value=Math.min(0.95,Math.max(0.60,(parseFloat(pfEl.value)||0.75)));
+  calc();
+  if(explicit) toast('已切回自定义 cosφ');
+}
+// 用户主动拖滑杆 → 解除厂家锁定，回到自定义模式
+function onPfDrag(){
+  if(document.getElementById('pf').step==='0.0001') unlockPf(false);
+  calc();
+}
+
+function pickTier(req){
+  // 阈值 7%：余量过小就升档。12kW 整机需 120kVA，125 档只差 4% 必跳 160；
+  // 20kW 需 185kVA，200 档差 7% 刚好保留 —— 避免一次跳到 250 浪费一台变压器
+  let t=TIERS.find(x=>x>=req)||TIERS[TIERS.length-1];
+  if(1-req/t<0.07){const i=TIERS.indexOf(t);t=TIERS[Math.min(i+1,TIERS.length-1)]}
+  return t;
+}
+function pickBrk(amps){
+  // 只向上取到 NEC 240.6 标准整定值：计算值已含 1.25 连续载流系数，
+  // 再按比例升档会把 88A 顶到 100A，白白多拉一级电缆
+  return BRK.find(x=>x>=amps)||BRK[BRK.length-1];
+}
+function pickFrame(b){return FRAME.find(f=>f>=b)||FRAME[FRAME.length-1]}
+function pickWire(brk){return WIRE.find(w=>w[1]>=brk)||WIRE[WIRE.length-1]}
+function run(kw,pf,vol,margin){
+  const kva=kw/pf, amps=kva*1000/(vol*Math.sqrt(3)), req=kva*margin, tier=pickTier(req);
+  return {kva,amps,req,tier,head:1-req/tier};
+}
+function set(id,v){document.getElementById(id).innerHTML=v}
+function amt(v){return v.toLocaleString('en-US',{maximumFractionDigits:0})}
+
+function renderWire(){
+  document.getElementById('wireTbl').innerHTML=WIRE.map(([n,a,r])=>
+   `<tr data-amp="${a}"><td class="mono" style="font-weight:500">${n}</td>`+
+   `<td class="n mono">${a}</td><td class="n mono" style="color:var(--tx2)">${r}</td>`+
+   `<td style="font-size:12.5px;color:var(--tx2)">${a>=125?'大截面常压接':'常规'}</td></tr>`).join('');
+}
+
+function calc(){
+  const kw=totalKw(), pf=parseFloat(document.getElementById('pf').value),
+        vol=parseFloat(document.getElementById('vol').value),
+        margin=parseFloat(document.getElementById('margin').value),
+        qty=getQty(), dem=getDemand();
+
+  document.getElementById('pfV').textContent=pf.toFixed(2);
+  const locked=document.getElementById('pf').step==='0.0001';
+  document.getElementById('pfLock').textContent=locked?'（厂家口径，已锁定）':'';
+
+  const one=run(kw,pf,vol,margin);
+  const siteKw=kw*qty*dem;
+  const site=run(siteKw,pf,vol,margin);
+
+  const siteNote=document.getElementById('siteNote');
+  if(qty===1&&dem===1){
+    siteNote.innerHTML='单台单系数运行 —— 按这台设备的<b>满负荷</b>核算，与设备手册一致。';
+  }else{
+    siteNote.innerHTML='<b>'+qty+' 台 × 需用系数 '+dem.toFixed(2)+'</b> → 场地最大同时负载 <b>'+siteKw.toFixed(0)
+      +' kW</b>（名义装机 '+amt(kw*qty)+' kW）。'+
+      (siteKw>630?'<br>⚠️ 超出单机变压器上限，建议<b>拆成 2 台变压器分组供电</b>并提前申请增容。':
+       siteKw>400?'<br>已接近 500/630 kVA 单机上限，与房东确认扩容余量。':'');
+  }
+
+  if(kw<=0){
+    ['rKva','rAmp','rKvaS','rAmpS','rTier','rBrk','rWire','rFrame','rBranch'].forEach(i=>{
+      const e=document.getElementById(i); if(e) e.textContent='—';
+    });
+    ['mbTier','mbBrk','mbWire','mbAmp'].forEach(i=>document.getElementById(i).textContent='—');
+    const n=document.getElementById('rNote');
+    n.className='note amber'; n.textContent='请先填写负载功率。';
+    drawChart(); save(); return;
+  }
+
+  set('rKva',one.kva.toFixed(1)+'<span class="m-u">kVA</span>');
+  document.getElementById('rKvaSub').textContent=kw.toFixed(0)+' kW ÷ cosφ '+pf.toFixed(2);
+  set('rAmp',Math.round(one.amps)+'<span class="m-u">A</span>');
+  document.getElementById('rAmpSub').textContent=vol+'V 三相满载';
+
+  set('rKvaS',site.kva.toFixed(1)+'<span class="m-u">kVA</span>');
+  document.getElementById('rKvaSSub').textContent=qty+' 台 × '+dem.toFixed(2)+' 系数';
+  set('rAmpS',Math.round(site.amps)+'<span class="m-u">A</span>');
+  document.getElementById('rAmpSSub').textContent='进线申请按此值';
+
+  set('rTier',site.tier+'<span class="m-u">kVA</span>');
+  document.getElementById('rTierSub').textContent='单台需 '+one.tier+' kVA';
+
+  const brk=pickBrk(site.amps*margin), frame=pickFrame(brk), wire=pickWire(brk);
+  set('rBrk',brk+'<span class="m-u">A</span>');
+  document.getElementById('rBrkSub').textContent='计算值 '+Math.round(site.amps*margin)+' A';
+  set('rWire',wire[0]);
+  document.getElementById('rWireSub').textContent='铜 75℃ 载流 '+wire[1]+' A';
+  set('rFrame',frame+'<span class="m-u">A</span>');
+  document.getElementById('rFrameSub').textContent='≥'+brk+' A 框架';
+
+  if(qty>1){
+    const b1=pickBrk(one.amps*margin);
+    set('rBranch',b1+'<span class="m-u">A</span>');
+    document.getElementById('rBranchSub').textContent='每台单独 '+pickWire(b1)[0];
+  }else{
+    set('rBranch','—');
+    document.getElementById('rBranchSub').textContent='单台无需分支';
+  }
+  document.getElementById('minA').textContent=amt(Math.ceil(site.amps*margin));
+
+  // 底部吸附条（仅手机端可见）
+  document.getElementById('mbTier').textContent=site.tier+' kVA';
+  document.getElementById('mbBrk').textContent=brk+' A';
+  document.getElementById('mbWire').textContent=wire[0];
+  document.getElementById('mbAmp').textContent=amt(Math.ceil(site.amps*margin))+' A';
+
+  document.querySelectorAll('#wireTbl tr').forEach(tr=>{
+    tr.classList.toggle('hl-row',parseFloat(tr.dataset.amp)===wire[1]);
+  });
+  // 手机端导线表是内部滚动容器：把选中行滚到可见处，不用手动往下拖
+  const wsc=document.getElementById('wireTbl').closest('.tbl-scroll');
+  if(wsc&&wsc.scrollHeight>wsc.clientHeight+4){
+    const row=wsc.querySelector('tr.hl-row');
+    if(row){
+      wsc.scrollTop+=row.getBoundingClientRect().top-wsc.getBoundingClientRect().top
+        -wsc.clientHeight/2+row.offsetHeight/2;
+    }
+  }
+
+  let cls='note', h='';
+  if(locked){
+    h+='<b>厂家口径</b> —— 已按厂家额定值锁定 cosφ='+pf.toFixed(4)
+      +'（保守值）。电流与厂家表一致，可直接与电气沟通。';
+  }
+  if(pf>=0.9){
+    cls+=' amber';
+    h+=(h?'<br>':'')+'<b>cosφ 偏高（'+pf.toFixed(2)+'）</b> —— 激光类负载通常 0.7~0.8，按此选会偏小，建议现场实测后重算。';
+  }
+  if(1-site.req/site.tier<0.12){
+    cls+=' amber';
+    h+=(h?'<br>':'')+'<b>余量偏紧</b> —— 需求 '+site.req.toFixed(0)+' kVA 对 '+site.tier+' kVA 仅剩 '
+      + Math.round((1-site.req/site.tier)*100)+'%。已按跳档规则上调，现场可再上一档。';
+  }else if(!locked){
+    h+=(h?'<br>':'')+'<b>选型 '+site.tier+' kVA</b> —— 场地需求 '+site.req.toFixed(0)+' kVA，余量 '
+      + Math.round((1-site.req/site.tier)*100)+'%。进线满载电流 '+Math.round(site.amps)+' A，'
+      + '总开关 '+brk+' A（框架 '+frame+' A），进线电缆 '+wire[0]+'。'
+      + '余量系数 '+margin+' 用于吸收激光源与压缩机启动冲击。';
+  }else{
+    h+=(h?'<br>':'')+'稳压器 '+site.tier+' kVA，场地需求 '+site.req.toFixed(0)+' kVA，余量 '
+      + Math.round((1-site.req/site.tier)*100)+'%。总开关 '+brk+' A（框架 '+frame+' A），进线电缆 '+wire[0]+'。';
+  }
+  if(pf<=0.72) h+='<br><b>建议实测 cosφ</b> —— 当前取 '+pf.toFixed(2)+'，档位对 cosφ 敏感，实测一次可避免选小或选大。';
+  if(qty>1&&site.tier>one.tier) h+='<br>多台共用一台稳压器从 <b>'+one.tier+' kVA</b> 升到 <b>'+site.tier
+    +' kVA</b>；若超 630 kVA 应拆机分组。';
+
+  const vm=parseFloat(document.getElementById('vmeas').value);
+  if(vm>0){
+    const dev=Math.abs(vm-vol)/vol*100;
+    if(dev>5){
+      cls+=' red';
+      h+='<br><br><b>⚠️ 电压偏差超限</b> —— 实测 '+vm+' V，标称 '+vol+' V，偏差 '+dev.toFixed(1)
+        +'%，超出 ANSI C84.1 的 ±5%。稳压器自身无法补偿，需电力公司调整或加装调压设备。';
+    }else{
+      h+='<br><br>实测电压 '+vm+' V（偏差 '+dev.toFixed(1)+'%，在 ±5% 内）。该电压下满载电流约 '
+        +Math.round(site.kva*1000/(vm*Math.sqrt(3)))+' A。';
+    }
+  }
+  const n=document.getElementById('rNote'); n.className=cls; n.innerHTML=h;
+
+  set('tPf',pf.toFixed(2)); set('tKva',site.kva.toFixed(1)); set('tReq',site.req.toFixed(0));
+  set('tTier',site.tier+' kVA'); set('tHead',Math.round((1-site.req/site.tier)*100)+'%');
+  const c=run(siteKw,0.70,vol,margin), q=run(siteKw,0.80,vol,margin);
+  set('tKvaC',c.kva.toFixed(1)); set('tKvaR',q.kva.toFixed(1));
+  set('tReqC',c.req.toFixed(0)); set('tReqR',q.req.toFixed(0));
+  set('tTierC',c.tier+' kVA'); set('tTierR',q.tier+' kVA');
+  set('tHeadC',Math.round((1-c.req/c.tier)*100)+'%');
+  set('tHeadR',Math.round((1-q.req/q.tier)*100)+'%');
+  set('tScene',amt(siteKw)+' kW 场地峰值 · '+vol+'V · 余量 '+margin+' · '+qty+' 台 × '+dem.toFixed(2));
+  drawChart(); save();
+}
+
+let chart;
+function drawChart(){
+  if(typeof Chart==='undefined') return;
+  const cv=document.getElementById('pfChart');
+  if(!cv) return;
+  const kw=totalKw()*getQty()*getDemand(), vol=parseFloat(document.getElementById('vol').value),
+        margin=parseFloat(document.getElementById('margin').value),
+        hl=parseFloat(document.getElementById('pf').value);
+  if(kw<=0) return;
+  const labels=[],data=[];
+  for(let p=0.60;p<=0.9001;p+=0.05){labels.push('cosφ '+p.toFixed(2));data.push(run(kw,p,vol,margin).tier)}
+  const colors=labels.map(l=>Math.abs(parseFloat(l.slice(4))-hl)<0.026?'#185fa5':'#c8d4e0');
+  if(chart){
+    chart.data.labels=labels;
+    chart.data.datasets[0].data=data;
+    chart.data.datasets[0].backgroundColor=colors;
+    chart.update('none');
+    return;
+  }
+  chart=new Chart(cv.getContext('2d'),{
+    type:'bar',
+    data:{labels:labels,datasets:[{data:data,backgroundColor:colors,borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,animation:{duration:220},
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.parsed.y+' kVA'}}},
+      scales:{
+        y:{beginAtZero:true,title:{display:true,text:'kVA',font:{size:10}},ticks:{font:{size:10},maxTicksLimit:5}},
+        x:{ticks:{font:{size:10},autoSkip:false,maxRotation:0},grid:{display:false}}}}
+  });
+}
+
+/* 现场实测反算 cosφ */
+function fieldMeas(){
+  const kw=parseFloat(document.getElementById('mKw').value),
+        a=parseFloat(document.getElementById('mAmp').value),
+        vol=parseFloat(document.getElementById('vol').value),
+        n=document.getElementById('mNote');
+  if(!(kw>0&&a>0)){n.className='note';n.textContent='填入有功功率钳表 + 钳形表读数，自动算 cosφ 并回填滑杆。';return;}
+  const pf=kw*1000/(vol*a*Math.sqrt(3));
+  if(pf>1.05||pf<0.2){
+    n.className='note red';
+    n.innerHTML='<b>算出的 cosφ='+pf.toFixed(2)+' 不合理</b> —— 检查是否多相仪表、或把线电流当成了相电流。';
+    return;
+  }
+  n.className='note green';
+  n.innerHTML='<b>实测 cosφ ≈ '+pf.toFixed(3)+'</b>'+(pf<0.6?'（极差，先查接线与仪表倍率）':'')
+    +'。共性经验：0.7~0.8 正常，<0.6 偏低。';
+  if(pf>=0.60&&pf<=0.95){
+    unlockPf(false);
+    document.getElementById('pf').value=pf.toFixed(2);
+    calc();
+  }
+}
+
+/* ══════════ 单位换算 ══════════ */
+// 碳钢号数 → mm（常规对照）
+const GA=[
+  [10,3.76],[12,3.13],[14,2.67],[16,2.16],[18,1.83],[20,1.55],[22,1.31],[24,1.11],[26,0.94]
+];
+// 常用分数英寸 → [值, 场景]
+const FRAC=[
+  ['1/2',0.5,'最常见 4 吋方管/圆管'],
+  ['5/8',0.625,'薄壁管、家具五金'],
+  ['3/4',0.75,'薄壁管、栏杆立柱'],
+  ['7/8',0.875,'中厚管'],
+  ['1',1,'标准圆管起步'],
+  ['1-1/4',1.25,'结构管'],
+  ['1-1/2',1.5,'结构管、扶手'],
+  ['2',2,'标准结构管'],
+  ['2-1/2',2.5,'大口径'],
+  ['3',3,'重型结构件'],
+  ['3-1/2',3.5,'大口径结构管'],
+  ['4',4,'大方管/厚壁'],
+  ['5',5,'大管、H 系列'],
+  ['6',6,'大管、H 系列'],
+  ['8',8,'超大管'],
+  ['10',10,'超大管'],
+  ['12',12,'超大管']
+];
+// NPS 公称 → [钢 OD(ASME B36.10), 不锈钢常用, 铝常用]
+const NPS=[
+  ['1/8',10.3,'—','—'],['1/4',13.7,'—','—'],['3/8',17.1,'—','—'],
+  ['1/2',21.3,15.9,20.0],['3/4',26.7,19.1,26.7],['1',33.4,25.4,33.4],
+  ['1-1/4',42.2,31.8,41.3],['1-1/2',48.3,38.1,48.3],['2',60.3,50.8,60.3],
+  ['2-1/2',73.0,63.5,73.0],['3',88.9,76.2,88.9],['3-1/2',101.6,88.9,101.6],
+  ['4',114.3,101.6,114.3],['5',141.3,127.0,141.3],['6',168.3,152.4,168.3],
+  ['8',219.1,203.2,219.1],['10',273.1,254.0,273.1],['12',323.9,304.8,323.9],
+  ['14',355.6,'—','355.6'],['16',406.4,'—','406.4'],['18',457.0,'—','457.0'],
+  ['20',508.0,'—','508.0'],['24',610.0,'—','610.0']
+];
+// 产品线幅面（mm）
+const LINES=[
+  ['K 系列 直切',1.5,280,'圆管/方管 2D 直切，家具五金、小口径'],
+  ['T 系列 坡口',15,500,'3D 旋转头 ±45°，可切 K/V 坡口，焊接结构件'],
+  ['F 系列 异形',10,160,'异形管、非标截面'],
+  ['H 系列 重型',50,1000,'大口径重型管']
+];
+
+// 智能输入解析：2-1/2"、1 1/2、Ø114.3、1.5in、20ga、80 mm
+function parseInput(raw){
+  let s=String(raw==null?'':raw).trim();
+  if(!s) return null;
+  const hasQuote=/["”''`″]/.test(s);          // 带引号一律按英寸
+  // 空格分数：1 1/2
+  const sp=s.match(/^(\d+(?:\.\d+)?)\s+(\d+\s*\/\s*\d+)$/);
+  if(sp) return {v:parseFloat(sp[1])+fracVal(sp[2].replace(/\s/g,'')),u:'in'};
+  s=s.replace(/[øØФфΦφ]/g,'')
+    .replace(/["”''`″]/g,'')
+    .replace(/[－—–]/g,'-')
+    .replace(/\s+/g,'');
+  if(!s) return null;
+  let unit=null;
+  const um=s.match(/(mm|厘米|cm|米|m|in|inch|ga|号)$/i);
+  if(um){
+    const t=um[1].toLowerCase();
+    const head=s.slice(0,s.length-um[1].length);
+    const hv=parseFloat(head);
+    if(t==='mm'){s=head;unit='mm';}
+    else if(t==='厘米'||t==='cm'){s=String(hv*10);unit='mm';}
+    else if(t==='米'||t==='m'){s=String(hv*1000);unit='mm';}
+    else if(t==='ga'||t==='号'){s=head;unit='ga';}
+    else{s=head;unit='in';}
+  }else if(hasQuote){
+    unit='in';
+  }
+  if(s.includes('-')&&s.includes('/')){
+    const p=s.split('-');
+    const w=parseFloat(p[0]), f=fracVal(p[1]);
+    if(isFinite(w)&&isFinite(f)) return {v:w+f,u:unit||'in'};
+    return null;
+  }
+  if(s.includes('/')){
+    const f=fracVal(s);
+    return isFinite(f)?{v:f,u:unit||'in'}:null;
+  }
+  // 整段必须是纯数字：'12x34'、'5kg' 这类脏输入直接判无效，不做 parseFloat 截断
+  if(!/^[+-]?(\d+\.?\d*|\.\d+)$/.test(s)) return null;
+  const n=parseFloat(s);
+  if(!isFinite(n)) return null;
+  return {v:n,u:unit};
+}
+function fracVal(f){
+  const p=String(f).split('/');
+  const n=parseFloat(p[0]), d=parseFloat(p[1]);
+  if(isFinite(n)&&isFinite(d)&&d!==0) return n/d;
+  return isFinite(n)?n:NaN;
+}
+
+// 英寸 → 带分数。dens 为候选分母；输出前约分（6/8 → 3/4）
+function gcd(a,b){return b?gcd(b,a%b):a}
+function toMixed(x, dens){
+  const sign = x < 0 ? '-' : '';
+  x = Math.abs(x);
+  const w = Math.floor(x), f = x - w;
+  let best = null;
+  for (const d of dens) {
+    const n = Math.round(f * d), err = Math.abs(f - n / d);
+    if (!best || err < best.err) best = { n, d, err };
+  }
+  if (best.n === 0) return sign + w;
+  if (best.n === best.d) return sign + (w + 1);
+  const g = gcd(best.n, best.d);
+  const n = best.n / g, d = best.d / g;
+  return sign + (w > 0 ? w + '-' : '') + n + '/' + d;
+}
+// 分母按数值自适应：整英寸不显示分数，大值粗、小值细
+function denomFor(inch){
+  if (inch >= 4) return [2,4,8];
+  if (inch >= 1) return [2,4,8,16];
+  return [4,8,16,32];
+}
+
+function conv(){
+  const raw=document.getElementById('cvVal').value;
+  const selU=document.getElementById('cvUnit').value;
+  const oMm=document.getElementById('oMm'),oIn=document.getElementById('oIn'),
+        oFrac=document.getElementById('oFrac'),oNear=document.getElementById('oNear'),
+        oCirc=document.getElementById('oCirc'),oFit=document.getElementById('oFit');
+  const parsed=parseInput(raw);
+  if(!parsed||!(parsed.v>0)){
+    [oMm,oIn,oFrac,oNear,oCirc].forEach(e=>e.textContent='—');
+    oFit.innerHTML=''; return;
+  }
+  const u=parsed.u||selU, v=parsed.v;
+
+  let mm, approx=false;
+  if(u==='mm') mm=v;
+  else if(u==='in') mm=v*25.4;
+  else { // ga → mm（分段线性插值表）
+    const g=v;
+    if(g<GA[0][0]){ mm=GA[0][1]+(GA[0][0]-g)*0.11; approx=true; }
+    else if(g>GA[GA.length-1][0]){ mm=Math.max(0.35,GA[GA.length-1][1]-(g-GA[GA.length-1][0])*0.09); approx=true; }
+    else{
+      let i=0; while(i<GA.length-2 && g>GA[i+1][0]) i++;
+      const [g1,m1]=GA[i],[g2,m2]=GA[i+1];
+      mm=m1+(m2-m1)*((g-g1)/(g2-g1));
+    }
+  }
+  const inch=mm/25.4;
+
+  oMm.textContent=mm.toFixed(2)+(approx?'（查表外估算）':'');
+  oIn.textContent=inch.toFixed(3);
+  oFrac.textContent=toMixed(inch,denomFor(inch));
+  // 最近常用规格：从速查表找绝对差最小的真实分数
+  // ga 是板材厚度（<1mm），不存在对应管规格，不做匹配
+  if(mm>=6.35){
+    let nf=FRAC[0], nv=FRAC[0][1], nd=Infinity;
+    FRAC.forEach(([f,v2])=>{const d=Math.abs(v2-inch);if(d<nd){nd=d;nf=f;nv=v2}});
+    oNear.textContent = nf+'"'
+      + (nd<0.004?'（精确）':nd<0.03?'（接近）':'（差 '+Math.abs(nv-inch).toFixed(3)+'″）');
+  }else{
+    oNear.textContent='不适用（板材厚度）';
+  }
+  oCirc.textContent=(Math.PI*mm).toFixed(1);
+
+  // 产品线适配
+  const fits=LINES.filter(([,a,b])=>mm>=a&&mm<=b);
+  let h='';
+  if(fits.length){
+    h+='<b>可加工</b><br>';
+    fits.forEach(([n,a,b,d])=>{
+      const cov=mm<b?((mm-a)/(b-a)*100).toFixed(0):100;
+      h+='<span class="tag">'+n+'</span> '+a+'–'+b+'mm，位置 '+cov+'%（'+(cov<30?'偏小端':cov>70?'偏大端':'居中')+'）<br><span style="color:var(--tx2);font-size:12.5px">'+d+'</span><br>';
+    });
+  }else{
+    h='<b style="color:var(--red)">超出各系列幅面</b><br><span style="color:var(--tx2)">'+mm.toFixed(2)+'mm 超出标准机型范围，请与销售确认非标方案。</span>';
+  }
+  oFit.innerHTML=h;
+}
+
+/* 渲染速查表 */
+function renderTables(){
+  document.getElementById('npsTbl').innerHTML=NPS.map(([n,s,ss,al])=>{
+   const f=x=>x==='—'?'—':Number(x).toFixed(1);
+   return `<tr onclick="fillIn(${s})" style="cursor:pointer">
+      <td class="mono" style="font-weight:500">${n}"</td>
+      <td class="n mono">${f(s)}</td>
+      <td class="n mono" style="color:var(--tx2)">${f(ss)}</td>
+      <td class="n mono" style="color:var(--tx2)">${f(al)}</td></tr>`;
+  }).join('');
+  document.getElementById('fracTbl').innerHTML=FRAC.map(([f,v,s])=>
+   `<tr onclick="fillIn(${v})" style="cursor:pointer">
+      <td class="mono" style="font-weight:500">${f}"</td>
+      <td class="n mono">${(v*25.4).toFixed(2)}</td>
+      <td class="n mono" style="color:var(--tx2)">${(Math.PI*v*25.4).toFixed(1)}</td>
+      <td style="font-size:12.5px;color:var(--tx2)">${s}</td></tr>`).join('');
+  document.getElementById('gaTbl').innerHTML=GA.map(([g,m])=>
+   `<tr onclick="fillIn(${g},'ga')" style="cursor:pointer">
+      <td class="mono" style="font-weight:500">${g} ga</td>
+      <td class="n mono">${m.toFixed(2)}</td>
+      <td class="n mono" style="color:var(--tx2)">${(m/25.4).toFixed(4)}</td>
+      <td style="font-size:12.5px;color:var(--tx2)">${g<=12?'厚板':g<=18?'常规板':'薄板'}</td></tr>`).join('');
+}
+function fillIn(v,u){
+  document.getElementById('cvVal').value=v;
+  if(u) document.getElementById('cvUnit').value=u;
+  conv();
+  document.getElementById('v-conv').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+/* 重量估算 */
+function nf(id){return parseFloat(document.getElementById(id).value)||0}
+function weight(){
+  const rho=nf('mat'); // g/cm³
+  const t=nf('pT'),l=nf('pL'),w=nf('pW'),q=Math.max(0,nf('pQ'));
+  const one=t*l*w*rho*1e-6; // mm²·mm → cm³ → g → kg
+  document.getElementById('pKg').textContent=one>0?one.toFixed(2)+' kg':'—';
+  document.getElementById('pSum').textContent=one>0?(one*q).toFixed(2)+' kg':'—';
+
+  const od=nf('tO'),wt=nf('tT'),len=nf('tL'),q2=Math.max(0,nf('tQ'));
+  const idm=od-2*wt;
+  const kg=idm>0?Math.PI*(od-wt)*wt*len*rho*1e-6:NaN;
+  document.getElementById('tKg').textContent=isFinite(kg)?kg.toFixed(2)+' kg':(idm<=0?'壁厚过大':'—');
+  document.getElementById('tSum').textContent=isFinite(kg)?(kg*q2).toFixed(2)+' kg':'—';
+}
+
+/* ══════════ 摘要复制 ══════════ */
+function copySpec(){
+  const kw=totalKw();
+  if(kw<=0){toast('先填负载功率');return;}
+  const pf=parseFloat(document.getElementById('pf').value),
+        vol=parseFloat(document.getElementById('vol').value),
+        margin=parseFloat(document.getElementById('margin').value),
+        qty=getQty(), dem=getDemand(), siteKw=kw*qty*dem;
+  const one=run(kw,pf,vol,margin), site=run(siteKw,pf,vol,margin);
+  const brk=pickBrk(site.amps*margin), frame=pickFrame(brk), wire=pickWire(brk);
+  const d=new Date();
+  const pad=n=>String(n).padStart(2,'0');
+  const t=[
+    '【激光设备供电核算 · 场地进线申请】',
+    d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+' '+pad(d.getHours())+':'+pad(d.getMinutes()),
+    '',
+    '设备数量：'+qty+' 台 × 需用系数 '+dem.toFixed(2),
+    '单台装机功率：'+kw.toFixed(0)+' kW',
+    '场地峰值功率：'+siteKw.toFixed(0)+' kW',
+    '功率因数 cosφ：'+pf.toFixed(2)+(document.getElementById('pf').step==='0.0001'?'（厂家口径）':''),
+    '进线电压：'+vol+'V 三相',
+    '',
+    '单台视在功率：'+one.kva.toFixed(1)+' kVA，满载电流 '+Math.round(one.amps)+' A',
+    '场地视在功率：'+site.kva.toFixed(1)+' kVA，满载电流 '+Math.round(site.amps)+' A',
+    '',
+    '建议稳压器：'+site.tier+' kVA（余量 '+Math.round((1-site.req/site.tier)*100)+'%，需求 '+site.req.toFixed(0)+' kVA）',
+    '总开关：'+brk+' A（框架 '+frame+' A）',
+    '进线电缆：铜 3 × '+wire[0]+'（75℃ 载流 '+wire[1]+' A）',
+    '与物业/电力公司确认：三相进线 ≥ '+amt(Math.ceil(site.amps*margin))+' A @ '+vol+'V',
+    '余量系数：'+margin+'（吸收激光源与压缩机启动冲击）',
+    '',
+    '注：结果仅供参考，最终以现场电气工程师核算与当地电力公司进线条件为准。'
+  ].join('\n');
+  copy(t);
+}
+function copyConv(){
+  const g=id=>document.getElementById(id).textContent;
+  if(g('oMm')==='—'){toast('先输入数值');return;}
+  const t=['输入：'+document.getElementById('cvVal').value,
+    '毫米：'+g('oMm'),'英寸（小数）：'+g('oIn'),'英寸（分数）：'+g('oFrac')+'"',
+    '最接近常用规格：'+g('oNear'),'外周长：'+g('oCirc')+' mm'].join('\n');
+  copy(t);
+}
+function copyWeight(){
+  const p=document.getElementById('pKg').textContent, ps=document.getElementById('pSum').textContent,
+        w=document.getElementById('tKg').textContent, ws=document.getElementById('tSum').textContent;
+  if(p==='—'&&w==='—'){toast('先填尺寸');return;}
+  const mat=document.getElementById('mat').selectedOptions[0].textContent;
+  const t=['【重量估算 · 理论值】材质：'+mat,
+    '板材 '+nf('pT')+'×'+nf('pW')+'×'+nf('pL')+' mm × '+nf('pQ')+' 件：单件 '+p+'，合计 '+ps,
+    '圆管 OD'+nf('tO')+'/t'+nf('tT')+'×'+nf('tL')+' mm × '+nf('tQ')+' 根：单根 '+w+'，合计 '+ws,
+    '注：未计损耗，实际以过磅为准（1 lb = 0.4536 kg）。'].join('\n');
+  copy(t);
+}
+
+/* ══════════ 本地保存 ══════════ */
+const KEY='laser-tool-v2';
+function save(){
+  try{
+    localStorage.setItem(KEY,JSON.stringify({
+      loads,qty:getQty(),demand:getDemand(),
+      pf:document.getElementById('pf').value,pfLock:document.getElementById('pf').step==='0.0001',
+      vol:document.getElementById('vol').value,margin:document.getElementById('margin').value,
+      vmeas:document.getElementById('vmeas').value,
+      cvVal:document.getElementById('cvVal').value,cvUnit:document.getElementById('cvUnit').value
+    }));
+    document.getElementById('saveHint').textContent='已自动保存到本机 · '+new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'});
+  }catch(e){}
+}
+function restore(){
+  let s; try{s=JSON.parse(localStorage.getItem(KEY))}catch(e){return false}
+  if(!s||!s.loads) return false;
+  loads=s.loads;
+  document.getElementById('qty').value=s.qty||1;
+  document.getElementById('demand').value=String(s.demand||1);
+  document.getElementById('vol').value=s.vol||'480';
+  document.getElementById('margin').value=s.margin||'1.25';
+  document.getElementById('vmeas').value=s.vmeas||'';
+  if(s.pfLock){
+    const el=document.getElementById('pf');
+    el.step='0.0001';
+    const c=parseFloat(s.pf)||0.6;
+    el.min=Math.max(0.50,c-0.01).toFixed(2);
+    el.max=Math.min(1.00,c+0.01).toFixed(2);
+    el.value=(parseFloat(s.pf)||0.6).toFixed(4);
+  }else{
+    document.getElementById('pf').value=s.pf||'0.75';
+  }
+  if(s.cvVal) document.getElementById('cvVal').value=s.cvVal;
+  if(s.cvUnit) document.getElementById('cvUnit').value=s.cvUnit;
+  return true;
+}
+function resetAll(){
+  try{localStorage.removeItem(KEY)}catch(e){}
+  location.reload();
+}
+
+renderLoads();
+renderVendor();
+const had=restore();
+renderLoads();
+calc();
+renderTables();
+conv();
+weight();
+markScroll();
+if(had) document.getElementById('saveHint').textContent='已载入上次保存的参数';
+</script>
+</body>
+</html>
